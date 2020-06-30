@@ -23,8 +23,6 @@ public class Interpreter {
 	public String ProgramBody() {
 		String exprResult = "";
 		for (String currentLine : lines) {
-			//Lexer currentLineLexer = new Lexer(currentLine);
-			//List<Token> tokenList = currentLineLexer.getTokens();
 			if(currentLine.startsWith("int ") && currentLine.endsWith(";") && 
 			   !currentLine.contains("{")) {
 				    String[] lineFragments = currentLine.split(";");
@@ -97,11 +95,17 @@ public class Interpreter {
 			variableName = assignExpression.substring(intIndex,assignIndex).trim();
 			variableValue = assignExpression.substring(assignIndex + 1).replace(" ","");
 			if(defined) {
-				currentData.put(variableName, variableValue);
+				if(currentData.get(variableName) != null) {
+					currentData.put(variableName, variableValue.replace(variableName, currentData.get(variableName)));
+				}
+				else {
+					currentData.put(variableName, variableValue);
+				}
+				
 			}
 			else {
 				if(currentData.get(variableName) != null) {
-					currentData.put(variableName, variableValue);
+					currentData.put(variableName, variableValue.replace(variableName, currentData.get(variableName)));
 				}
 				else {
 					currentData.put(variableName, "not defined");
@@ -110,14 +114,20 @@ public class Interpreter {
 			
 		}
 		else {
-			variableName = assignExpression.substring(0, assignIndex - 1).trim();
+			variableName = assignExpression.substring(0, assignIndex).trim();
 			variableValue = assignExpression.substring(assignIndex + 1).trim();
 			if(defined) {
-				currentData.put(variableName, variableValue);
+				if(currentData.get(variableName) != null) {
+					currentData.put(variableName, variableValue.replace(variableName, currentData.get(variableName)));
+				}
+				else {
+					currentData.put(variableName, variableValue);
+				}
+				
 			}
 			else {
 				if(currentData.get(variableName) != null) {
-					currentData.put(variableName, variableValue);
+					currentData.put(variableName, variableValue.replace(variableName, currentData.get(variableName)));
 				}
 				else {
 					currentData.put(variableName, "not defined");
@@ -128,16 +138,16 @@ public class Interpreter {
 	
 	public void parseUnassignedVariable(String assignExpression, boolean defined) {
 		String variableName = "";
-		String variableValue = "";	
+			
 		if(assignExpression.startsWith("int ")) {
 			int intIndex = assignExpression.indexOf("int ") + 4;
 			variableName = assignExpression.substring(intIndex).trim();			
 			if(defined) {
-				currentData.put(variableName, variableValue);
+				currentData.put(variableName, "");
 			}
 			else {
 				if(currentData.get(variableName) != null) {
-					currentData.put(variableName, variableValue);
+					currentData.put(variableName, "");
 				}
 				else {
 					currentData.put(variableName, "not defined");
@@ -147,11 +157,11 @@ public class Interpreter {
 		else {
 			variableName = assignExpression.trim();			
 			if(defined) {
-				currentData.put(variableName, variableValue);
+				currentData.put(variableName, "");
 			}
 			else {
 				if(currentData.get(variableName) != null) {
-					currentData.put(variableName, variableValue);
+					currentData.put(variableName, "");
 				}
 				else {
 					currentData.put(variableName, "not defined");
@@ -173,37 +183,55 @@ public class Interpreter {
 	}
 	
 	public String evalVariable(DataStorage dataTable, String key) {
-		if(dataTable.get(key) == null || dataTable.get(key).isEmpty()) {
-			return key + " is not initialized "; 
-		}
-		else if(dataTable.get(key) == "not defined") {
-			return key + " not defined ";
-		}
-		else if(tryParseInt(dataTable.get(key))) {
-			return dataTable.get(key);
-		}
-		else {
-			Lexer evalLexer = new Lexer(key);
-			Token t = evalLexer.getToken();
-			int identifierLength = t.getValue().length();
-			if(t.getType() == TokenType.Identifier) {
-				Token op = evalLexer.getToken();
-				switch(op.getType()) {
-					case Op_add:
-					 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) + 
+		Lexer evalLexer = new Lexer(key);
+		Token t = evalLexer.getToken();
+		int identifierLength = t.getValue().length();
+		if(t.getType() == TokenType.Identifier || t.getType() == TokenType.Integer) {
+			
+			Token op = evalLexer.getToken();
+			switch(op.getType()) {
+				case Op_add:
+					if(!tryParseInt(evalVariable(dataTable,t.getValue()))) {
+						return evalVariable(dataTable,t.getValue());
+					}
+					if(!tryParseInt(evalVariable(dataTable, key.substring(identifierLength + 1)))) {
+						return evalVariable(dataTable, key.substring(identifierLength + 1));
+					}
+				 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) + 
+					Integer.parseInt(evalVariable(dataTable, key.substring(identifierLength + 1))));
+				case Op_subtract:
+					if(!tryParseInt(evalVariable(dataTable,t.getValue()))) {
+						return evalVariable(dataTable,t.getValue());
+					}
+					if(!tryParseInt(evalVariable(dataTable, key.substring(identifierLength + 1)))) {
+						return evalVariable(dataTable, key.substring(identifierLength + 1));
+					}
+					 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) - 
 						Integer.parseInt(evalVariable(dataTable, key.substring(identifierLength + 1))));
-					case Op_subtract:
-						 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) - 
-							Integer.parseInt(evalVariable(dataTable, key.substring(identifierLength + 1))));
-					default:
-						return "";
-				
-				}				
-			}
-			else {
-				return "";
-			}
+				default:
+					if(t.tokentype==TokenType.Integer) {
+						return t.getValue();
+					}
+					else if(dataTable.get(t.getValue()) == null || dataTable.get(t.getValue()).isEmpty()) {
+						return t.getValue() + " is not initialized "; 
+					}
+					else if(dataTable.get(t.getValue()) == "not defined") {
+						return t.getValue() + " not defined ";
+					}
+					else if(tryParseInt(dataTable.get(t.getValue()))) {
+						return dataTable.get(t.getValue());
+					}
+					else {
+						return evalVariable(dataTable,dataTable.get(t.getValue()));
+					}
+			
+			}				
 		}
+				
+		else {
+			
+		}
+		return "";
 	}
 	
 	

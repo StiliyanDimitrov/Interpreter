@@ -44,7 +44,8 @@ static boolean advanceReadEndSymbols(String line){
                     Lexer lexer = new Lexer(source.toString());
                     String[] allLines = lexer.getLines();
                     Interpreter interpreter = new Interpreter(allLines, mainData);
-            		interpreter.interpret();
+            		String interpretResult = interpreter.interpret();
+            		System.out.println(interpretResult);
             		System.out.print(">");
                 }               
             } 
