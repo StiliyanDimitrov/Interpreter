@@ -27,14 +27,14 @@ public class Interpreter {
 			   !currentLine.contains("{")) {
 				    String[] lineFragments = currentLine.split(";");
 				    for(String currentFragment : lineFragments) {
-				    	variablesDefinition(currentFragment, true);
+				    	variablesDefinition(currentFragment.trim(), true);
 				    }
 			}
 			else if(!currentLine.startsWith("int ") && !currentLine.startsWith("test ") && 
 					currentLine.endsWith(";") && !currentLine.contains("{")) {
 				String[] lineFragments = currentLine.split(";");
 			    for(String currentFragment : lineFragments) {
-			    	variablesDefinition(currentFragment, false);
+			    	variablesDefinition(currentFragment.trim(), false);
 			    }
 			}
 			else if((currentLine.startsWith("test ") && currentLine.endsWith(";")) || 
@@ -179,7 +179,12 @@ public class Interpreter {
 	}
 	
 	public String calculateVariableExpressionResult(String evaluationText) {
-		return	evalVariable(currentData,evaluationText.replace(" ", ""));
+		String tempResult = evalVariable(currentData,evaluationText.replace(" ", ""));
+		if(tempResult.contains("not") || tempResult.isEmpty()) {
+			return tempResult;
+		}
+		ExpressionEvaluator exprEval = new ExpressionEvaluator();
+		return Integer.toString(exprEval.evaluate(tempResult));
 	}
 	
 	public String evalVariable(DataStorage dataTable, String key) {
@@ -190,24 +195,18 @@ public class Interpreter {
 			
 			Token op = evalLexer.getToken();
 			switch(op.getType()) {
-				case Op_add:
-					if(!tryParseInt(evalVariable(dataTable,t.getValue()))) {
-						return evalVariable(dataTable,t.getValue());
+				case Op_add:	
+					if(evalVariable(dataTable,t.getValue()).contains("not") || evalVariable(dataTable,t.getValue()).isEmpty()) {
+						return	evalVariable(dataTable,t.getValue());
 					}
-					if(!tryParseInt(evalVariable(dataTable, key.substring(identifierLength + 1)))) {
-						return evalVariable(dataTable, key.substring(identifierLength + 1));
-					}
-				 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) + 
-					Integer.parseInt(evalVariable(dataTable, key.substring(identifierLength + 1))));
+				 return	evalVariable(dataTable,t.getValue()) + "+" + 
+					evalVariable(dataTable, key.substring(identifierLength + 1));
 				case Op_subtract:
-					if(!tryParseInt(evalVariable(dataTable,t.getValue()))) {
-						return evalVariable(dataTable,t.getValue());
+					if(evalVariable(dataTable,t.getValue()).contains("not") || evalVariable(dataTable,t.getValue()).isEmpty()) {
+						return	evalVariable(dataTable,t.getValue());
 					}
-					if(!tryParseInt(evalVariable(dataTable, key.substring(identifierLength + 1)))) {
-						return evalVariable(dataTable, key.substring(identifierLength + 1));
-					}
-					 return	Integer.toString(Integer.parseInt(evalVariable(dataTable,t.getValue())) - 
-						Integer.parseInt(evalVariable(dataTable, key.substring(identifierLength + 1))));
+					return evalVariable(dataTable,t.getValue()) + "-" + 
+						evalVariable(dataTable, key.substring(identifierLength + 1));
 				default:
 					if(t.tokentype==TokenType.Integer) {
 						return t.getValue();
@@ -229,7 +228,9 @@ public class Interpreter {
 		}
 				
 		else {
-			
+			if(t.getType() == TokenType.Op_subtract) {
+				return "-" + evalVariable(dataTable,key.substring(1));
+			}						
 		}
 		return "";
 	}
