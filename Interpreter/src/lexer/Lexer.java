@@ -15,6 +15,7 @@ public class Lexer {
     private static Map<String, TokenType> keywords = new HashMap<>(); 
     static {
     	keywords.put("int", TokenType.Keyword_int);
+    	keywords.put("return",TokenType.Keyword_return);
         keywords.put("test", TokenType.Keyword_test);
         keywords.put("assert", TokenType.Keyword_assert);
         keywords.put("connect", TokenType.Keyword_connect);
