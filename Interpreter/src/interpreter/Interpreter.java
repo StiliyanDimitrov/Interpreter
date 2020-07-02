@@ -22,33 +22,70 @@ public class Interpreter {
 	
 	public String ProgramBody() {
 		String exprResult = "";
+		boolean openedConnect = false;
+		StringBuilder connectBlock;
+		boolean openedMethod = false;
+		StringBuilder methodBlock;
+		boolean openedTest = false;
+		StringBuilder testBlock;
 		for (String currentLine : lines) {
-			if(currentLine.startsWith("int ") && currentLine.endsWith(";") && 
-			   !currentLine.contains("{")) {
-				    String[] lineFragments = currentLine.split(";");
+			if(openedConnect) {
+				
+			}
+			else if(openedMethod) {
+				if(currentLine.contains("}")) {
+					openedMethod = false;
+				}
+				else if(currentLine.contains("(") || currentLine.contains(")")) {
+					return "not allowed symbol !";
+				}
+				else if(currentLine.contains("return")){
+					
+				}
+				else {
+					String[] lineFragments = currentLine.split(";");
 				    for(String currentFragment : lineFragments) {
 				    	variablesDefinition(currentFragment.trim(), true);
 				    }
+				}
 			}
-			else if(!currentLine.startsWith("int ") && !currentLine.startsWith("test ") && 
-					currentLine.endsWith(";") && !currentLine.contains("{")) {
-				String[] lineFragments = currentLine.split(";");
-			    for(String currentFragment : lineFragments) {
-			    	variablesDefinition(currentFragment.trim(), false);
-			    }
+			else if(openedTest) {
+				
 			}
-			else if((currentLine.startsWith("test ") && currentLine.endsWith(";")) || 
-					(!currentLine.endsWith(";") && !currentLine.endsWith("{") && !currentLine.endsWith("}"))) {
-				if(currentLine.startsWith("test ")) {
+			else {
+				if(currentLine.startsWith("int ") && currentLine.endsWith(";") && 
+				   !currentLine.contains("{")) {
+					    String[] lineFragments = currentLine.split(";");
+					    for(String currentFragment : lineFragments) {
+					    	variablesDefinition(currentFragment.trim(), true);
+					    }
+				}
+				else if(!currentLine.startsWith("int ") && !currentLine.startsWith("test ") && 
+						currentLine.endsWith(";") && !currentLine.contains("{")) {
+					String[] lineFragments = currentLine.split(";");
+				    for(String currentFragment : lineFragments) {
+				    	variablesDefinition(currentFragment.trim(), false);
+				    }
+				}
+				else if((currentLine.startsWith("test ") && currentLine.endsWith(";")) || 
+						(!currentLine.endsWith(";") && !currentLine.endsWith("{") && !currentLine.endsWith("}"))) {
+					if(currentLine.startsWith("test ")) {
+						
+					}
+					else if(!currentLine.contains("(") && !currentLine.contains("connect") &&
+							!currentLine.contains("disconnect") && !currentLine.contains("most-failing-test") &&
+							!currentLine.contains("most-executed-test")) {
+						exprResult = calculateVariableExpressionResult(currentLine);
+						break;
+					}
 					
 				}
-				else if(!currentLine.contains("(") && !currentLine.contains("connect") &&
-						!currentLine.contains("disconnect") && !currentLine.contains("most-failing-test") &&
-						!currentLine.contains("most-executed-test")) {
-					exprResult = calculateVariableExpressionResult(currentLine);
-					break;
+				else if(currentLine.startsWith("int ") && currentLine.endsWith("{") &&
+						currentLine.contains("(") && currentLine.contains(")")) {
+					openedMethod = true;
+					methodBlock = new StringBuilder();
+					methodBlock.append(currentLine + "\n");
 				}
-				
 			}
 			
 		}	
@@ -170,7 +207,7 @@ public class Interpreter {
 		}
 	}
 	
-	public void methodDefinition(String textBlock) {
+	public void methodVariablesDefinition(String textBlock) {
 		
 	}
 	

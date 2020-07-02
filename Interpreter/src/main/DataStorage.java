@@ -8,11 +8,9 @@ public class DataStorage{
     private Map<String, String> map = new HashMap<String, String>();
     
     private Map<String, HashMap<String, String>> functionOuterMap = new HashMap<String, HashMap<String, String>>();
-    private Map<String, String> functionInnerMap = new HashMap<String, String>();  
-    
+        
     private Map<String, HashMap<String, String>> testOuterMap = new HashMap<String, HashMap<String, String>>();
-    private Map<String, String> testInnerMap = new HashMap<String, String>();
-
+    
     private static DataStorage instance = null;
 
     private DataStorage() {}
@@ -31,19 +29,19 @@ public class DataStorage{
     	return map.get(key);
     }
     
-    public void functionPut(String key, String value) {
-        functionInnerMap.put(key,value);       
+    public void addFunction(String key, HashMap<String,String> value) {
+        functionOuterMap.put(key,value);       
     }
     
-    public String functionGet(String key) {
-    	return functionInnerMap.get(key);
+    public HashMap<String,String> getFunction(String key) {
+    	return functionOuterMap.get(key);
     }
     
-    public void testPut(String key, String value) {
-        testInnerMap.put(key,value);       
+    public void addTest(String key, HashMap<String,String> value) {
+        testOuterMap.put(key,value);       
     }
     
-    public String testGet(String key) {
-    	return testInnerMap.get(key);
+    public HashMap<String,String> getTest(String key) {
+    	return testOuterMap.get(key);
     }
 }
