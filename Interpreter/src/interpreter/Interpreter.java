@@ -23,31 +23,24 @@ public class Interpreter {
 	public String ProgramBody() {
 		String exprResult = "";
 		boolean openedConnect = false;
-		StringBuilder connectBlock;
+		StringBuilder connectBlock = new StringBuilder();
 		boolean openedMethod = false;
-		StringBuilder methodBlock;
+		StringBuilder methodBlock = new StringBuilder();
 		boolean openedTest = false;
-		StringBuilder testBlock;
+		StringBuilder testBlock = new StringBuilder();
 		for (String currentLine : lines) {
 			if(openedConnect) {
 				
 			}
 			else if(openedMethod) {
+				methodBlock.append(currentLine + "\n");
 				if(currentLine.contains("}")) {
 					openedMethod = false;
+					methodVariablesDefinition(methodBlock.toString());
 				}
 				else if(currentLine.contains("(") || currentLine.contains(")")) {
 					return "not allowed symbol !";
-				}
-				else if(currentLine.contains("return")){
-					
-				}
-				else {
-					String[] lineFragments = currentLine.split(";");
-				    for(String currentFragment : lineFragments) {
-				    	variablesDefinition(currentFragment.trim(), true);
-				    }
-				}
+				}				
 			}
 			else if(openedTest) {
 				
@@ -207,8 +200,143 @@ public class Interpreter {
 		}
 	}
 	
-	public void methodVariablesDefinition(String textBlock) {
+	public void methodVariablesDefinition(String textBlock) {		
+		int openParenthesisPos = textBlock.indexOf("(");
+		int closeParenthesisPos = textBlock.indexOf(")");
+		if(openParenthesisPos <= 0 || closeParenthesisPos <=0) {
+			return;
+		}
+		String methodName = textBlock.substring(0, openParenthesisPos).replace("int ", "").trim();
 		
+		HashMap<String,String> methodVariables = new HashMap<String,String>();
+		String parametersList = textBlock.substring(openParenthesisPos + 1, closeParenthesisPos);
+		if(parametersList.contains(",")) {
+			String[] parameterFragments = parametersList.split(",");
+			for(String currentParameterFragment : parameterFragments) {
+				methodVariables.put(currentParameterFragment.replace("int ", "").trim(), "");
+			}
+		}
+		int openBracePos = textBlock.indexOf("{");
+		int closeBracePos = textBlock.indexOf("}");
+		if(openBracePos <= 0 || closeBracePos <=0) {
+			return;
+		}
+		String methodBody = textBlock.substring(openBracePos+1, closeBracePos);
+		String[] methodLines = methodBody.split("\n");
+		for(String currentLine : methodLines) {
+			boolean defined = false;
+			if(currentLine.trim().startsWith("int ")) {
+				defined = true;
+			}
+			if(currentLine.contains("return")) {
+				methodVariables.put("return", currentLine.replace("return","").trim());
+			}
+			if(currentLine.contains(",")) {
+				String[] variableFragments = currentLine.split(",");
+				for(String currentVariableFragment : variableFragments) {
+					int assignIndex = currentVariableFragment.indexOf("=");
+					if(assignIndex > 0) {
+						parseMethodAssignedVariable(currentVariableFragment,assignIndex, defined, methodVariables);				
+					}
+					else {
+						parseMethodUnassignedVariable(currentVariableFragment, defined, methodVariables);
+					}
+				}				
+			}
+			else {
+				int assignIndex = currentLine.indexOf("=");
+				if(assignIndex > 0) {
+					parseMethodAssignedVariable(currentLine,assignIndex, defined, methodVariables);				
+				}
+				else {
+					parseMethodUnassignedVariable(currentLine, defined, methodVariables);
+				}            
+			}
+		}		
+		currentData.addFunction(methodName, methodVariables);
+	}
+	
+	public void parseMethodAssignedVariable(String assignExpression, int assignIndex, boolean defined, HashMap<String,String> methodMap) {
+		String variableName = "";
+		String variableValue = "";	
+		if(assignExpression.startsWith("int ")) {
+			int intIndex = assignExpression.indexOf("int ") + 4;
+			variableName = assignExpression.substring(intIndex,assignIndex).trim();
+			variableValue = assignExpression.substring(assignIndex + 1).replace(" ","");
+			if(defined) {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, variableValue.replace(variableName, methodMap.get(variableName)));
+				}
+				else {
+					methodMap.put(variableName, variableValue);
+				}
+				
+			}
+			else {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, variableValue.replace(variableName, methodMap.get(variableName)));
+				}
+				else {
+					methodMap.put(variableName, "not defined");
+				}					
+			}
+			
+		}
+		else {
+			variableName = assignExpression.substring(0, assignIndex).trim();
+			variableValue = assignExpression.substring(assignIndex + 1).trim();
+			if(defined) {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, variableValue.replace(variableName, methodMap.get(variableName)));
+				}
+				else {
+					methodMap.put(variableName, variableValue);
+				}
+				
+			}
+			else {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, variableValue.replace(variableName, methodMap.get(variableName)));
+				}
+				else {
+					methodMap.put(variableName, "not defined");
+				}					
+			}
+		}
+	}
+	
+	public void parseMethodUnassignedVariable(String assignExpression, boolean defined, HashMap<String,String> methodMap) {
+		String variableName = "";
+			
+		if(assignExpression.startsWith("int ")) {
+			int intIndex = assignExpression.indexOf("int ") + 4;
+			variableName = assignExpression.substring(intIndex).trim();			
+			if(defined) {
+				methodMap.put(variableName, "");
+			}
+			else {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, "");
+				}
+				else {
+					methodMap.put(variableName, "not defined");
+				}					
+			}
+		}
+		else {
+			variableName = assignExpression.trim();			
+			if(defined) {
+				methodMap.put(variableName, "");
+			}
+			else {
+				if(methodMap.get(variableName) != null) {
+					methodMap.put(variableName, "");
+				}
+				else {
+					methodMap.put(variableName, "not defined");
+				}					
+			}
+		}
 	}
 	
 	public void testDefinition(String textBlock) {

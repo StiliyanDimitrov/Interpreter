@@ -29,8 +29,8 @@ public class DataStorage{
     	return map.get(key);
     }
     
-    public void addFunction(String key, HashMap<String,String> value) {
-        functionOuterMap.put(key,value);       
+    public void addFunction(String key, HashMap<String, String> methodVariables) {
+        functionOuterMap.put(key,methodVariables);       
     }
     
     public HashMap<String,String> getFunction(String key) {
