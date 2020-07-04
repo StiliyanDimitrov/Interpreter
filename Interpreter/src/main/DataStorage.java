@@ -1,15 +1,16 @@
 package main;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DataStorage{
 
     private Map<String, String> map = new HashMap<String, String>();
     
-    private Map<String, HashMap<String, String>> functionOuterMap = new HashMap<String, HashMap<String, String>>();
+    private Map<String, LinkedHashMap<String, String>> functionOuterMap = new HashMap<String, LinkedHashMap<String, String>>();
         
-    private Map<String, HashMap<String, String>> testOuterMap = new HashMap<String, HashMap<String, String>>();
+    private Map<String, LinkedHashMap<String, String>> testOuterMap = new HashMap<String, LinkedHashMap<String, String>>();
     
     private static DataStorage instance = null;
 
@@ -29,19 +30,19 @@ public class DataStorage{
     	return map.get(key);
     }
     
-    public void addFunction(String key, HashMap<String, String> methodVariables) {
+    public void addFunction(String key, LinkedHashMap<String, String> methodVariables) {
         functionOuterMap.put(key,methodVariables);       
     }
     
-    public HashMap<String,String> getFunction(String key) {
+    public LinkedHashMap<String,String> getFunction(String key) {
     	return functionOuterMap.get(key);
     }
     
-    public void addTest(String key, HashMap<String,String> value) {
+    public void addTest(String key, LinkedHashMap<String,String> value) {
         testOuterMap.put(key,value);       
     }
     
-    public HashMap<String,String> getTest(String key) {
+    public LinkedHashMap<String,String> getTest(String key) {
     	return testOuterMap.get(key);
     }
 }

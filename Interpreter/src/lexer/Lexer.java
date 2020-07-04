@@ -111,8 +111,16 @@ public class Lexer {
     	}
     	return tokenList;
     }
-    public String[] getLines(){
-    	return s.split("\n");
+    public String[] getLines(){    	
+    	List<String> list = new ArrayList<String>();
+    	for(String tempString : s.split("\n")) {
+    		if(!tempString.trim().isEmpty()) {
+    			list.add(tempString);
+    		}
+    	}
+    	String[] array = list.toArray(new String[0]);
+
+    	return array;
     }
     
 }
