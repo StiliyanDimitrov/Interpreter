@@ -3,8 +3,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
 
 import lexer.Lexer;
@@ -46,7 +44,14 @@ public class Interpreter {
 				}				
 			}
 			else if(openedTest) {
-				
+				testBlock.append(currentLine + "\n");
+				if(currentLine.contains("}")) {
+					openedTest = false;
+					testDefinition(testBlock.toString());
+				}
+				else if(currentLine.contains("test ")) {
+					return "not allowed expression !";
+				}
 			}
 			else {
 				if(currentLine.startsWith("int ") && currentLine.endsWith(";") && 
@@ -65,8 +70,10 @@ public class Interpreter {
 				}
 				else if((currentLine.startsWith("test ") && currentLine.endsWith(";")) || 
 						(!currentLine.endsWith(";") && !currentLine.endsWith("{") && !currentLine.endsWith("}"))) {
-					if(currentLine.startsWith("test ")) {
-						
+					if(currentLine.startsWith("test ") && currentLine.endsWith(";")) {
+						String testName = currentLine.substring(currentLine.indexOf("test ")+5,currentLine.indexOf("("));
+						exprResult = calculateTestExpressionResult(testName);
+						break;
 					}
 					else if(!currentLine.contains("(") && !currentLine.contains("connect") &&
 							!currentLine.contains("disconnect") && !currentLine.contains("most-failing-test") &&
@@ -78,6 +85,7 @@ public class Interpreter {
 							!currentLine.endsWith(";")) {
 						String methodName = currentLine.substring(0,currentLine.indexOf("(")).trim();
 						exprResult = calculateMethodExpressionResult(methodName, currentLine);
+						break;
 					}
 					
 				}
@@ -86,6 +94,11 @@ public class Interpreter {
 					openedMethod = true;
 					methodBlock = new StringBuilder();
 					methodBlock.append(currentLine + "\n");
+				}
+				else if(currentLine.startsWith("test ") && currentLine.endsWith("{")) {
+					openedTest=true;
+					testBlock = new StringBuilder();
+					testBlock.append(currentLine + "\n");
 				}
 			}
 			
@@ -233,6 +246,9 @@ public class Interpreter {
 				methodVariables.put(currentParameterFragment.replace("int ", "").trim(), "");
 			}
 		}
+		else if(!parametersList.isEmpty()) {
+			methodVariables.put(parametersList.replace("int ", "").trim(), "");
+		}
 		int openBracePos = textBlock.indexOf("{");
 		int closeBracePos = textBlock.indexOf("}");
 		if(openBracePos <= 0 || closeBracePos <=0) {
@@ -364,7 +380,60 @@ public class Interpreter {
 	}
 	
 	public void testDefinition(String textBlock) {
+		int openParenthesisPos = textBlock.indexOf("(");
+		int closeParenthesisPos = textBlock.indexOf(")");
+		if(openParenthesisPos <= 0 || closeParenthesisPos <=0) {
+			return;
+		}
+		String testName = textBlock.substring(0, openParenthesisPos).replace("test ", "").trim();
 		
+		LinkedHashMap<String,String> testVariables = new LinkedHashMap<String,String>();
+		
+		int openBracePos = textBlock.indexOf("{");
+		int closeBracePos = textBlock.indexOf("}");
+		if(openBracePos <= 0 || closeBracePos <=0) {
+			return;
+		}
+		String testBody = textBlock.substring(openBracePos+1, closeBracePos);
+		String[] testLines = testBody.split("\n");
+		for(String currentLine : testLines) {
+			if(currentLine.trim().isEmpty()) {
+				continue;
+			}
+			for(String currentExpression : currentLine.split(";")) {
+				boolean defined = false;
+				if(currentExpression.trim().startsWith("int ")) {
+					defined = true;
+				}
+				if(currentExpression.contains("assert")) {
+					testVariables.put("assert", currentExpression.replace("assert","").trim());
+					continue;
+				}
+				else if(!currentExpression.contains("assert") && currentExpression.contains(",")) {
+					String[] variableFragments = currentExpression.split(",");
+					for(String currentVariableFragment : variableFragments) {
+						int assignIndex = currentVariableFragment.indexOf("=");
+						if(assignIndex > 0) {
+							parseMethodAssignedVariable(currentVariableFragment,assignIndex, defined, testVariables);				
+						}
+						else {
+							parseMethodUnassignedVariable(currentVariableFragment, defined, testVariables);
+						}
+					}				
+				}
+				else {
+					int assignIndex = currentExpression.indexOf("=");
+					if(assignIndex > 0) {
+						parseMethodAssignedVariable(currentExpression,assignIndex, defined, testVariables);				
+					}
+					else {
+						parseMethodUnassignedVariable(currentExpression, defined, testVariables);
+					}            
+				}
+			}
+			
+		}		
+		currentData.addTest(testName, testVariables);
 	}
 	
 	public String calculateVariableExpressionResult(String evaluationText) {
@@ -406,6 +475,89 @@ public class Interpreter {
 		}
 		ExpressionEvaluator exprEval = new ExpressionEvaluator();
 		return Integer.toString(exprEval.evaluate(tempResult));
+	}
+	
+	public String calculateMethodTestExpressionResult(String methodName, String evaluationText, String testName) {
+		String factParameters = evaluationText.substring(evaluationText.indexOf("(") + 1, evaluationText.indexOf(")"));
+		List<String> factParamsArray = new ArrayList<String>();
+		if(!factParameters.isEmpty()) {
+			if(factParameters.contains(",")) {
+				for(String currentFactParam : factParameters.split(",")) {
+					if(!currentFactParam.isEmpty()) {
+						factParamsArray.add(currentFactParam);
+					}
+				}
+			}
+			else {
+				factParamsArray.add(factParameters.trim());
+			}
+		}		
+		LinkedHashMap<String,String> methodMap = currentData.getFunction(methodName);
+		Set<String> keySet = methodMap.keySet();
+		List<String> listKeys = new ArrayList<String>(keySet);
+		int fpCounter = 0;
+		for(String factParam : factParamsArray) {			
+			String factParamValue = calculateTestVariableExpressionResult(testName,factParam);			
+			String key = listKeys.get(fpCounter++);
+			methodMap.put(key, factParamValue); 
+		}
+		String tempResult = evalFunctionVariable(methodMap,methodMap.get("return").replace(" ", ""));
+		if(tempResult.contains("not") || tempResult.isEmpty()) {
+			return tempResult;
+		}
+		ExpressionEvaluator exprEval = new ExpressionEvaluator();
+		return Integer.toString(exprEval.evaluate(tempResult));
+	}
+	
+	public String calculateTestVariableExpressionResult(String testName, String evaluationText) {
+		LinkedHashMap<String,String> testMethodMap = currentData.getTest(testName);
+		String tempResult = evalFunctionVariable(testMethodMap,evaluationText.replace(" ", ""));
+		if(tempResult.contains("not") || tempResult.isEmpty()) {
+			return tempResult;
+		}
+		ExpressionEvaluator exprEval = new ExpressionEvaluator();
+		return Integer.toString(exprEval.evaluate(tempResult));
+	}
+	
+	public String calculateTestExpressionResult(String testName) {
+		LinkedHashMap<String,String> testMap = currentData.getTest(testName);
+		
+		String assertEval = testMap.get("assert").replace(" ", "");
+		int openParenIndex = assertEval.indexOf("(");
+		int closeParenIndex = assertEval.indexOf(")");
+		int commaIndex = assertEval.indexOf(",");
+		String firstPart="";
+		String secondPart="";
+		String evalMethodName="";
+		
+		if(openParenIndex > 0 && closeParenIndex > 0) {			
+			if(commaIndex > openParenIndex && commaIndex < closeParenIndex) {
+				commaIndex = assertEval.indexOf(",",closeParenIndex+1);
+			}
+		}
+		String[] assertParts = new String[] {assertEval.substring(0,commaIndex).trim(),assertEval.substring(commaIndex+1).trim()};
+			if(assertParts[0].trim().contains("(")) {
+				evalMethodName = assertParts[0].substring(0,assertParts[0].indexOf("(")).trim();
+				firstPart = calculateMethodTestExpressionResult(evalMethodName, assertParts[0].trim(),testName);
+			}
+			else {
+				firstPart = calculateTestVariableExpressionResult(testName,assertParts[0].trim());
+			}
+			
+			if(assertParts[1].trim().contains("(")) {
+				evalMethodName = assertParts[1].substring(0,assertParts[1].indexOf("(")).trim();
+				secondPart = calculateMethodTestExpressionResult(evalMethodName, assertParts[1].trim(),testName);
+			}
+			else {
+				secondPart = calculateTestVariableExpressionResult(testName,assertParts[1].trim());
+			}
+			if(!firstPart.trim().isEmpty() && !secondPart.trim().isEmpty() && firstPart.equals(secondPart)) {
+				return String.format("%s runs successfully", testName);
+			}
+			else {
+				return String.format("%s fails", testName);
+			}
+			
 	}
 	
 	public String evalVariable(DataStorage dataTable, String key) {
