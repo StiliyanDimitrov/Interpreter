@@ -1,5 +1,6 @@
 package interpreter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,10 +16,12 @@ public class Interpreter {
 
 	private String[] lines;
 	private DataStorage currentData;
+	private List<TestStatistic> testStatsList;
 	
-	public Interpreter(String[] lines, DataStorage currentData) {
+	public Interpreter(String[] lines, DataStorage currentData, List<TestStatistic> testStatsList) {
 		this.lines = lines;
 		this.currentData = currentData;
+		this.testStatsList = testStatsList;
 	}
 	
 	public String ProgramBody() {
@@ -29,6 +32,7 @@ public class Interpreter {
 		StringBuilder methodBlock = new StringBuilder();
 		boolean openedTest = false;
 		StringBuilder testBlock = new StringBuilder();
+		
 		for (String currentLine : lines) {
 			if(openedConnect) {
 				
@@ -73,6 +77,25 @@ public class Interpreter {
 					if(currentLine.startsWith("test ") && currentLine.endsWith(";")) {
 						String testName = currentLine.substring(currentLine.indexOf("test ")+5,currentLine.indexOf("("));
 						exprResult = calculateTestExpressionResult(testName);
+						boolean successTest = exprResult.contains("successfully");
+						TestStatistic currentTestStat = testStatsList.stream().filter(x->x.getTestName().equals(testName))
+						.findAny()
+						.orElse(null);
+						if(currentTestStat != null) {
+							currentTestStat.setExecutionCount(currentTestStat.getExecutionCount() + 1);
+							if(!successTest) {
+								currentTestStat.setFailCount(currentTestStat.getFailCount() + 1);
+							}							
+						}
+						else {
+							if(!successTest) {
+								currentTestStat = new TestStatistic(testName, 1, 1);
+							}
+							else {
+								currentTestStat = new TestStatistic(testName, 1, 0);
+							}	
+							testStatsList.add(currentTestStat);
+						}
 						break;
 					}
 					else if(!currentLine.contains("(") && !currentLine.contains("connect") &&
@@ -85,6 +108,10 @@ public class Interpreter {
 							!currentLine.endsWith(";")) {
 						String methodName = currentLine.substring(0,currentLine.indexOf("(")).trim();
 						exprResult = calculateMethodExpressionResult(methodName, currentLine);
+						break;
+					}
+					else if(currentLine.startsWith("most-failing-test") || currentLine.startsWith("most-executed-test")) {
+						exprResult = queryTestResult(currentLine.trim(), testStatsList);
 						break;
 					}
 					
@@ -441,6 +468,7 @@ public class Interpreter {
 		if(tempResult.contains("not") || tempResult.isEmpty()) {
 			return tempResult;
 		}
+		tempResult=tempResult.replace("--", "+");
 		ExpressionEvaluator exprEval = new ExpressionEvaluator();
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
@@ -473,6 +501,7 @@ public class Interpreter {
 		if(tempResult.contains("not") || tempResult.isEmpty()) {
 			return tempResult;
 		}
+		tempResult=tempResult.replace("--", "+");
 		ExpressionEvaluator exprEval = new ExpressionEvaluator();
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
@@ -505,6 +534,7 @@ public class Interpreter {
 		if(tempResult.contains("not") || tempResult.isEmpty()) {
 			return tempResult;
 		}
+		tempResult=tempResult.replace("--", "+");
 		ExpressionEvaluator exprEval = new ExpressionEvaluator();
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
@@ -515,6 +545,7 @@ public class Interpreter {
 		if(tempResult.contains("not") || tempResult.isEmpty()) {
 			return tempResult;
 		}
+		tempResult=tempResult.replace("--", "+");
 		ExpressionEvaluator exprEval = new ExpressionEvaluator();
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
@@ -560,6 +591,24 @@ public class Interpreter {
 			
 	}
 	
+	public String queryTestResult(String command, List<TestStatistic> testStatList) {
+		if(testStatList.size() <= 0) {
+			return "no available data for tests";
+		}
+		if(command.equals("most-failing-test")) {
+			Collections.sort(testStatList,TestStatistic::compareByFailCount);
+			TestStatistic mostFailingResult = testStatList.get(testStatList.size()-1);
+			return String.format("%s is run %d times and failed %d times", 
+					mostFailingResult.getTestName(), mostFailingResult.getExecutionCount(), mostFailingResult.getFailCount());
+		}
+		else {
+			Collections.sort(testStatList,TestStatistic::compareByExecutionCount);
+			TestStatistic mostExecutedResult = testStatList.get(testStatList.size()-1);
+			return String.format("%s is run %d times", 
+					mostExecutedResult.getTestName(), mostExecutedResult.getExecutionCount());
+		}
+	}
+	
 	public String evalVariable(DataStorage dataTable, String key) {
 		Lexer evalLexer = new Lexer(key);
 		Token t = evalLexer.getToken();
@@ -581,7 +630,7 @@ public class Interpreter {
 					return evalVariable(dataTable,t.getValue()) + "-" + 
 						evalVariable(dataTable, key.substring(identifierLength + 1));
 				default:
-					if(t.tokentype==TokenType.Integer) {
+					if(t.getType()==TokenType.Integer) {
 						return t.getValue();
 					}
 					else if(dataTable.get(t.getValue()) == null || dataTable.get(t.getValue()).isEmpty()) {
@@ -629,7 +678,7 @@ public class Interpreter {
 					return evalFunctionVariable(dataTable,t.getValue()) + "-" + 
 					evalFunctionVariable(dataTable, key.substring(identifierLength + 1));
 				default:
-					if(t.tokentype==TokenType.Integer) {
+					if(t.getType()==TokenType.Integer) {
 						return t.getValue();
 					}
 					else if(dataTable.get(t.getValue()) == null || dataTable.get(t.getValue()).isEmpty()) {
@@ -654,8 +703,7 @@ public class Interpreter {
 			}						
 		}
 		return "";
-	}
-	
+	}	
 	
 	public void connectIPBlock() {
 		

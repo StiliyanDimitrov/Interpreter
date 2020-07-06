@@ -4,11 +4,11 @@ import java.util.Stack;
 
 public class ExpressionEvaluator {
 	static class Node {
-        Boolean isPositive;
-        Integer value;
-        ArrayList<Node> list;
+        private Boolean isPositive;
+        private int value;
+        private ArrayList<Node> list;
  
-        public Node(boolean isPositive, Integer value) {
+        public Node(boolean isPositive, int value) {
             this.isPositive = isPositive;
             this.value = value;
             this.list = new ArrayList<>();
@@ -28,7 +28,7 @@ public class ExpressionEvaluator {
     }
  
     public int evaluate(String s) {
-        Stack<Node> stack = new Stack<>();
+    	Stack<Node> stack = new Stack<>();
         stack.push(new Node(true, 0));
  
         Boolean isPositive = true;

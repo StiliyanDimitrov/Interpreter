@@ -1,8 +1,8 @@
 package lexer.token;
 
 public class Token {
-        public TokenType tokentype;
-        public String value;        
+        private TokenType tokentype;
+        private String value;        
         
         public Token(TokenType token, String value) {
             this.tokentype = token; this.value = value; 
@@ -11,7 +11,7 @@ public class Token {
         	return this.tokentype;
         }
         public String getValue() {
-    		return value;
+    		return this.value;
     	}
         
         @Override

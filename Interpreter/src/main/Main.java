@@ -1,13 +1,12 @@
 package main;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import interpreter.Interpreter;
+import interpreter.TestStatistic;
 import lexer.Lexer;
-import lexer.token.Token;
 
 public class Main {
 
@@ -31,6 +30,7 @@ static boolean advanceReadEndSymbols(String line){
     		System.out.print(">");
     		String currentLineText;
     		DataStorage mainData = DataStorage.getInstance();
+    		List<TestStatistic> testStatsList = new ArrayList<TestStatistic>();
     		
     		while (userInput.hasNext()) {
                 	StringBuilder source = new StringBuilder();
@@ -43,7 +43,7 @@ static boolean advanceReadEndSymbols(String line){
                 	
                     Lexer lexer = new Lexer(source.toString());
                     String[] allLines = lexer.getLines();
-                    Interpreter interpreter = new Interpreter(allLines, mainData);
+                    Interpreter interpreter = new Interpreter(allLines, mainData,testStatsList);
             		String interpretResult = interpreter.interpret();
             		System.out.println(interpretResult);
             		System.out.print(">");

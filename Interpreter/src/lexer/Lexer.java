@@ -98,7 +98,7 @@ public class Lexer {
     
     public void printTokens() {
         Token t;
-        while ((t = getToken()).tokentype != TokenType.End_of_input) {
+        while ((t = getToken()).getType() != TokenType.End_of_input) {
             System.out.println(t);
         }
         System.out.println(t);
@@ -106,7 +106,7 @@ public class Lexer {
     public List<Token> getTokens() {
     	List<Token> tokenList = new ArrayList<Token>();
     	Token t;
-    	while((t = getToken()).tokentype != TokenType.End_of_input) {
+    	while((t = getToken()).getType() != TokenType.End_of_input) {
     		tokenList.add(t);
     	}
     	return tokenList;
