@@ -1,5 +1,10 @@
 package lexer.token;
 
+/**
+ * class for working with tokens
+ * @author st
+ *
+ */
 public class Token {
         private TokenType tokentype;
         private String value;        

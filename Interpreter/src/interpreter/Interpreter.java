@@ -11,6 +11,11 @@ import lexer.token.Token;
 import lexer.token.TokenType;
 import main.DataStorage;
 
+/**
+ * class to interpret given command
+ * @author st
+ *
+ */
 
 public class Interpreter {
 
@@ -24,20 +29,19 @@ public class Interpreter {
 		this.testStatsList = testStatsList;
 	}
 	
+	/**
+	 * method to interpret program body
+	 * @return String result of interpretation
+	 */
 	public String ProgramBody() {
 		String exprResult = "";
-		boolean openedConnect = false;
-		StringBuilder connectBlock = new StringBuilder();
 		boolean openedMethod = false;
 		StringBuilder methodBlock = new StringBuilder();
 		boolean openedTest = false;
 		StringBuilder testBlock = new StringBuilder();
 		
 		for (String currentLine : lines) {
-			if(openedConnect) {
-				
-			}
-			else if(openedMethod) {
+			if(openedMethod) {
 				methodBlock.append(currentLine + "\n");
 				if(currentLine.contains("}")) {
 					openedMethod = false;
@@ -98,8 +102,7 @@ public class Interpreter {
 						}
 						break;
 					}
-					else if(!currentLine.contains("(") && !currentLine.contains("connect") &&
-							!currentLine.contains("disconnect") && !currentLine.contains("most-failing-test") &&
+					else if(!currentLine.contains("(") && !currentLine.contains("most-failing-test") &&
 							!currentLine.contains("most-executed-test")) {
 						exprResult = calculateVariableExpressionResult(currentLine);
 						break;
@@ -139,7 +142,11 @@ public class Interpreter {
 		return ProgramBody();
 	}	
 	
-
+    /**
+     * method to define variables
+     * @param lineText given variable from program body
+     * @param defined whether variable is defined or not 
+     */
 	public void variablesDefinition(String lineText, boolean defined) {
 			
 		if(lineText.contains(",") && !lineText.contains("(") && !lineText.contains(")")) {
@@ -174,6 +181,12 @@ public class Interpreter {
 		}	
 	}
 	
+	/**
+	 * method to associate variable name with expression
+	 * @param assignExpression given expression
+	 * @param assignIndex get index of assignment operator 
+	 * @param defined check whether variable is defined or not
+	 */
 	public void parseAssignedVariable(String assignExpression, int assignIndex, boolean defined) {
 		String variableName = "";
 		String variableValue = "";	
@@ -223,6 +236,11 @@ public class Interpreter {
 		}
 	}
 	
+	/**
+	 * method for putting in table unassigned variables
+	 * @param assignExpression variable expression
+	 * @param defined whether variable is defined or not
+	 */
 	public void parseUnassignedVariable(String assignExpression, boolean defined) {
 		String variableName = "";
 			
@@ -257,6 +275,10 @@ public class Interpreter {
 		}
 	}
 	
+	/**
+	 * method to define variables in method
+	 * @param textBlock given method block
+	 */
 	public void methodVariablesDefinition(String textBlock) {		
 		int openParenthesisPos = textBlock.indexOf("(");
 		int closeParenthesisPos = textBlock.indexOf(")");
@@ -323,6 +345,13 @@ public class Interpreter {
 		currentData.addFunction(methodName, methodVariables);
 	}
 	
+	/**
+	 * method to assign variables of given function
+	 * @param assignExpression variable expression
+	 * @param assignIndex index of assignment operator
+	 * @param defined whether variable is defined or not
+	 * @param methodMap table to store method variables
+	 */
 	public void parseMethodAssignedVariable(String assignExpression, int assignIndex, boolean defined, HashMap<String,String> methodMap) {
 		String variableName = "";
 		String variableValue = "";	
@@ -372,6 +401,12 @@ public class Interpreter {
 		}
 	}
 	
+	/**
+	 * method to put in table function unassigned variables
+	 * @param assignExpression variable expression
+	 * @param defined whether variable is defined or not
+	 * @param methodMap table to store method variables
+	 */
 	public void parseMethodUnassignedVariable(String assignExpression, boolean defined, HashMap<String,String> methodMap) {
 		String variableName = "";
 			
@@ -406,6 +441,10 @@ public class Interpreter {
 		}
 	}
 	
+	/**
+	 * method to define test
+	 * @param textBlock given body of test
+	 */
 	public void testDefinition(String textBlock) {
 		int openParenthesisPos = textBlock.indexOf("(");
 		int closeParenthesisPos = textBlock.indexOf(")");
@@ -463,6 +502,11 @@ public class Interpreter {
 		currentData.addTest(testName, testVariables);
 	}
 	
+	/**
+	 * method to parse variable expression
+	 * @param evaluationText given expression
+	 * @return String parsed variable expression
+	 */
 	public String calculateVariableExpressionResult(String evaluationText) {
 		String tempResult = evalVariable(currentData,evaluationText.replace(" ", ""));
 		if(tempResult.contains("not") || tempResult.isEmpty()) {
@@ -473,6 +517,12 @@ public class Interpreter {
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
 	
+	/**
+	 * method to evaluate function expression
+	 * @param methodName given function name
+	 * @param evaluationText function expression to evaluate
+	 * @return String evaluated expression
+	 */
 	public String calculateMethodExpressionResult(String methodName, String evaluationText) {
 		String factParameters = evaluationText.substring(evaluationText.indexOf("(") + 1, evaluationText.indexOf(")"));
 		List<String> factParamsArray = new ArrayList<String>();
@@ -506,6 +556,13 @@ public class Interpreter {
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
 	
+	/**
+	 * method to evaluate given function in test body expression
+	 * @param methodName function name to evaluate
+	 * @param evaluationText expression to evaluate
+	 * @param testName test name
+	 * @return String evaluated function expression in test
+	 */
 	public String calculateMethodTestExpressionResult(String methodName, String evaluationText, String testName) {
 		String factParameters = evaluationText.substring(evaluationText.indexOf("(") + 1, evaluationText.indexOf(")"));
 		List<String> factParamsArray = new ArrayList<String>();
@@ -539,6 +596,12 @@ public class Interpreter {
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
 	
+	/**
+	 * method to evaluate variable in test
+	 * @param testName test name
+	 * @param evaluationText expression to evaluate
+	 * @return String evaluated variable expression in test
+	 */
 	public String calculateTestVariableExpressionResult(String testName, String evaluationText) {
 		LinkedHashMap<String,String> testMethodMap = currentData.getTest(testName);
 		String tempResult = evalFunctionVariable(testMethodMap,evaluationText.replace(" ", ""));
@@ -550,6 +613,11 @@ public class Interpreter {
 		return Integer.toString(exprEval.evaluate(tempResult));
 	}
 	
+	/**
+	 * method to evaluate result of test 
+	 * @param testName test name
+	 * @return String evaluated test result
+	 */
 	public String calculateTestExpressionResult(String testName) {
 		LinkedHashMap<String,String> testMap = currentData.getTest(testName);
 		
@@ -591,6 +659,12 @@ public class Interpreter {
 			
 	}
 	
+	/**
+	 * method to evaluate statistic results of executed and failing tests
+	 * @param command most-executed or most-failing
+	 * @param testStatList list of all executed tests
+	 * @return String statistic results of executed and failing tests
+	 */
 	public String queryTestResult(String command, List<TestStatistic> testStatList) {
 		if(testStatList.size() <= 0) {
 			return "no available data for tests";
@@ -609,6 +683,12 @@ public class Interpreter {
 		}
 	}
 	
+	/**
+	 * method to parse variable
+	 * @param dataTable variables table
+	 * @param key variable name
+	 * @return String parsed variable value expression
+	 */
 	public String evalVariable(DataStorage dataTable, String key) {
 		Lexer evalLexer = new Lexer(key);
 		Token t = evalLexer.getToken();
@@ -657,6 +737,12 @@ public class Interpreter {
 		return "";
 	}
 	
+	/**
+	 * method to parse function variable
+	 * @param dataTable variables table in function
+	 * @param key variable name
+	 * @return String parsed function variable value expression
+	 */
 	public String evalFunctionVariable(LinkedHashMap<String,String> dataTable, String key) {
 		Lexer evalLexer = new Lexer(key);
 		Token t = evalLexer.getToken();
@@ -705,10 +791,11 @@ public class Interpreter {
 		return "";
 	}	
 	
-	public void connectIPBlock() {
-		
-	}
-	
+	/**
+	 * method to check whether string can be converted to int
+	 * @param value given string for conversion
+	 * @return boolean whether it it possible to convert string to int
+	 */
 	boolean tryParseInt(String value) {  
 	     try {  
 	         Integer.parseInt(value);  

@@ -6,7 +6,12 @@ import java.util.List;
 import java.util.Map;
 import lexer.token.Token;
 import lexer.token.TokenType;
- 
+
+/**
+ * class to make lexical analysis of text
+ * @author st
+ *
+ */
 public class Lexer {
     private int position;
     private char chr;
@@ -35,6 +40,10 @@ public class Lexer {
         this.chr = this.s.charAt(0); 
     }
     
+    /**
+     * method to check type of token identifier, integer or keyword in the list of keyword
+     * @return Token object tokentype and value
+     */
     Token identifierOrInteger() {
         boolean isNumber = true;
         StringBuilder text = new StringBuilder();
@@ -64,6 +73,10 @@ public class Lexer {
         return new Token(TokenType.Identifier, text.toString());
     }
     
+    /**
+     * method to read next token
+     * @return Token object
+     */
     public Token getToken() {
         while (Character.isWhitespace(this.chr)) {
             getNextChar();
@@ -85,6 +98,10 @@ public class Lexer {
         }
     }
  
+    /**
+     * method to return next character 
+     * @return char next character
+     */
     char getNextChar() {
         this.position++;
         if (this.position >= this.s.length()) {
@@ -96,6 +113,9 @@ public class Lexer {
         return this.chr;
     }
     
+    /**
+     * method to print tokens
+     */
     public void printTokens() {
         Token t;
         while ((t = getToken()).getType() != TokenType.End_of_input) {
@@ -103,6 +123,11 @@ public class Lexer {
         }
         System.out.println(t);
     }
+    
+    /**
+     * method to get list of tokens
+     * @return List<Token> object
+     */
     public List<Token> getTokens() {
     	List<Token> tokenList = new ArrayList<Token>();
     	Token t;
@@ -111,6 +136,11 @@ public class Lexer {
     	}
     	return tokenList;
     }
+    
+    /**
+     * method to get all read lines
+     * @return String array of lines
+     */
     public String[] getLines(){    	
     	List<String> list = new ArrayList<String>();
     	for(String tempString : s.split("\n")) {

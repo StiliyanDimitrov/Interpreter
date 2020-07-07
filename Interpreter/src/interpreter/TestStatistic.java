@@ -1,5 +1,10 @@
 package interpreter;
 
+/**
+ * class for keeping statistics of executed tests
+ * @author st
+ *
+ */
 public class TestStatistic {
 	private String testName;	
 	private int executionCount;
@@ -32,10 +37,23 @@ public class TestStatistic {
 		this.failCount = failCount;
 	}
 	
+	/**
+	 * helper method to compare all tests by execution count
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	static int compareByExecutionCount(TestStatistic a, TestStatistic b)
     {
         return Integer.compare(a.getExecutionCount(), b.getExecutionCount());
     }
+	
+	/**
+	 * helper method to compare all tests by fail count
+	 * @param a
+	 * @param b
+	 * @return
+	 */
     static int compareByFailCount(TestStatistic a, TestStatistic b)
     {
         return Integer.compare(a.getFailCount(), b.getFailCount());

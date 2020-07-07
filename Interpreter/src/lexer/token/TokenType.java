@@ -1,5 +1,10 @@
 package lexer.token;
 
+/**
+ * token types enumeration
+ * @author st
+ *
+ */
 public enum TokenType {
         End_of_input, Op_add, Op_subtract, 
         Op_assign,  LeftParen, RightParen,

@@ -4,6 +4,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * class to store data
+ * @author st
+ *
+ */
+
 public class DataStorage{
 
     private Map<String, String> map = new HashMap<String, String>();
@@ -12,15 +18,7 @@ public class DataStorage{
         
     private Map<String, LinkedHashMap<String, String>> testOuterMap = new HashMap<String, LinkedHashMap<String, String>>();
     
-    private static DataStorage instance = null;
-
-    private DataStorage() {}
-
-    public static DataStorage getInstance() {
-        if (instance == null)
-            instance = new DataStorage();
-        return instance;
-    }
+    public DataStorage() {}
 
     public void put(String key, String value) {
         map.put(key,value);       

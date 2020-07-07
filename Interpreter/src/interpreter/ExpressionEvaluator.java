@@ -2,6 +2,10 @@ package interpreter;
 import java.util.ArrayList;
 import java.util.Stack;
 
+/**
+ * class to evaluate arithmetical expressions containing plus and minus
+ * @author st
+ */
 public class ExpressionEvaluator {
 	static class Node {
         private Boolean isPositive;
@@ -26,7 +30,12 @@ public class ExpressionEvaluator {
             return sum;
         }
     }
- 
+	
+   /**
+    * method to evaluate given arithmetical expression as string
+    * @param s
+    * @return int returns result of evaluated expression
+    */
     public int evaluate(String s) {
     	Stack<Node> stack = new Stack<>();
         stack.push(new Node(true, 0));
